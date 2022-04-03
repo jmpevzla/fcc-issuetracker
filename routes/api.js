@@ -1,34 +1,38 @@
 'use strict';
-const express = require('express')
+const express = require('express');
+const mongoose = require('mongoose');
 
 /**
  * @param {express.Express} app 
+ * @param {mongoose.Model} model
  */
-module.exports = function (app) {
+module.exports = function (app, model) {
 
   const projects = []
 
+  const fields = [
+    'issue_title',
+    'issue_text',
+    'created_on',
+    'updated_on',
+    'created_by',
+    'open', 
+    'assigned_to',
+    'status_text'
+  ]
+
   app.route('/api/issues/:project')
-  
+    
     .get(function (req, res){
       let project = req.params.project;
-      let query = req.query
-
-      let issues = projects[project]
-      if (query) {
-        issues = issues.filter((value) => {
-          for(let key in query) {
-            if (query[key] != String(value[key])) {
-              return false
-            }
-          }
-          
-          return true
-        })
-      }
+      let query = { ...req.query, project }
       
+      model.find(query, fields.join(' '), function (err, docs) {
+        if (err) console.error(err)
+        
+        return res.json(docs)
+      })
 
-      return res.json(issues)
     })
     
     .post(function (req, res){
@@ -46,23 +50,33 @@ module.exports = function (app) {
       if (!issue.assigned_to) issue.assigned_to = ''
       if (!issue.status_text) issue.status_text = ''
 
-      projects[project] = projects[project] || []
+      const newIssue = new model()
+      newIssue.project = project
+      newIssue.issue_title = issue.issue_title
+      newIssue.issue_text = issue.issue_text
+      newIssue.created_by = issue.created_by
+      newIssue.assigned_to = issue.assigned_to
+      newIssue.status_text = issue.status_text
+      newIssue.created_on = new Date()
+      newIssue.updated_on = new Date()
+      newIssue.open = true
       
-      issue._id = String(Math.trunc((Math.random() * 10000)))
-      issue.created_on = new Date()
-      issue.updated_on = new Date()
-      issue.open = true
-
-      projects[project].push(issue)
-      
-      return res.status(201).json(issue)
+      newIssue.save().then(issueCreated => {
+        const _issue = {
+          ...issueCreated._doc, 
+          project: undefined, 
+          __v: undefined
+        }
+       
+        return res.status(201).json(_issue)
+      }).catch(err => {
+        console.error(err)
+      }) 
     })
     
     .put(function (req, res){
-      let project = req.params.project;
-      
       const _id = req.body._id
-
+      
       if (!_id) {
         return res.json({
           error: 'missing _id'
@@ -80,39 +94,36 @@ module.exports = function (app) {
         })
       }
 
-      const issue = projects[project].find((value) => {
-        return _id == value._id
-      })
-
-      if (!issue) {
-        return res.json({
-          error: 'could not update',
-          _id
-        })
-      }
-    
-      issue.updated_on = new Date()
-      
-      for(let key in req.body) {
-        if (typeof(issue[key]) !== undefined
-          && key !== 'created_on' 
-          && key !== 'updated_on') {
-          
-            issue[key] = req.body[key]
+      model.findById(_id,  function(err, doc) {
+        if (err || !doc) {
+          return res.json({
+            error: 'could not update',
+            _id
+          })
         }
-      }
 
-      const resp = {
-        result: 'successfully updated', 
-        _id
-      }
+        doc.updated_on = new Date()
 
-      return res.json(resp)
+        for(let field in testBody) {
+          if (typeof(doc[field]) !== undefined
+          && field !== '_id') {
+            doc[field] = testBody[field]
+          }
+        }
+
+        doc.save().then(() => {
+          const resp = {
+            result: 'successfully updated', 
+            _id
+          }
+  
+          return res.json(resp)
+        })
+      })
       
     })
     
     .delete(function (req, res){
-      let project = req.params.project;
       const _id = req.body._id
 
       if (!_id) {
@@ -121,22 +132,22 @@ module.exports = function (app) {
         })
       }
 
-      const issueIndex = projects[project].findIndex((value) => {
-        return _id == value._id
-      })
+      model.findById(_id,  function(err, doc) {
+        if (err || !doc) {
+          return res.json({
+            error: 'could not delete',
+            _id
+          })
+        }
 
-      if (issueIndex === -1) {
-        return res.json({
-          _id,
-          error: 'could not delete'
+        model.deleteOne({ _id }, errx => {
+          const resp = {
+            result: 'successfully deleted', 
+            _id
+          }
+  
+          return res.json(resp)
         })
-      }
-
-      projects[project].splice(issueIndex, 1)
-
-      return res.json({
-        result: 'successfully deleted', 
-        _id
       })
     });
     

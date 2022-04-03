@@ -4,11 +4,32 @@ const express     = require('express');
 const bodyParser  = require('body-parser');
 const expect      = require('chai').expect;
 const cors        = require('cors');
+const mongoose = require('mongoose')
 require('dotenv').config();
 
 const apiRoutes         = require('./routes/api.js');
 const fccTestingRoutes  = require('./routes/fcctesting.js');
 const runner            = require('./test-runner');
+
+main().catch(err => console.error(err))
+
+async function main() {
+  await mongoose.connect(process.env.MONGO_URL)
+}
+
+const issuesSchema = mongoose.Schema({
+  project: String,
+  issue_title: String,
+  issue_text: String,
+  created_by: String, 
+  assigned_to: String,
+  status_text: String,
+  open: Boolean,
+  created_on: Date,
+  updated_on: Date
+})
+
+const Issues = mongoose.model('Issues', issuesSchema)
 
 let app = express();
 
@@ -37,7 +58,7 @@ app.route('/')
 fccTestingRoutes(app);
 
 //Routing for API 
-apiRoutes(app);  
+apiRoutes(app, Issues);  
     
 //404 Not Found Middleware
 app.use(function(req, res, next) {

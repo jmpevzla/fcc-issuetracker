@@ -257,7 +257,6 @@ suite('Functional Tests', function() {
           issue_title
         }
 
-        
         chai
           .request(server)
           .put('/api/issues/example')
@@ -291,7 +290,7 @@ suite('Functional Tests', function() {
         const updateData = {
           _id,
           issue_title: "Fix error in updating data",
-          issue_text: "When we create update it has an error.",
+          issue_text: "When we update it has an error.",
           created_by: "Jose Perez", 
           assigned_to: "Jose Perez",
           status_text: "In Prod",
@@ -356,8 +355,9 @@ suite('Functional Tests', function() {
     function(done) {
 
       async function doTest() {
+        const _id = "123456789101" 
         const updateData = {
-          _id: '1'
+          _id 
         }
         
         chai
@@ -369,7 +369,7 @@ suite('Functional Tests', function() {
 
             const resExpected = {
               error: 'no update field(s) sent', 
-              _id: '1' 
+              _id
             }
 
             assert.deepEqual(res.body, resExpected, `Response should be ${JSON.stringify(resExpected)}`)
@@ -384,8 +384,9 @@ suite('Functional Tests', function() {
     function(done) {
 
     async function doTest() {
+      const _id = "123456789101" 
       const updateData = {
-        _id: '-1',
+        _id,
         issue_title: 'Test issue'
       }
       
@@ -398,7 +399,7 @@ suite('Functional Tests', function() {
 
           const resExpected = {
             error: 'could not update', 
-            _id: '-1'
+            _id
           }
 
           assert.deepEqual(res.body, resExpected, `Response should be ${JSON.stringify(resExpected)}`)
