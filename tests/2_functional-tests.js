@@ -173,10 +173,10 @@ suite('Functional Tests', function() {
 
         const resJson = JSON.parse(res.text)
         assert.isArray(resJson, 'Response should be a Array')
-        const resExpected = 2
+        const resExpected = 1
 
-        assert.equal(resJson.length, resExpected, `Response length should be ${JSON.stringify(resExpected)}`)
-      
+        assert.isAtLeast(resJson.length, resExpected, `Response length should be ${JSON.stringify(resExpected)}`)
+
         for (let issue of resJson) {
           assert.hasAllKeys(issue, [
             '_id',
@@ -209,8 +209,8 @@ suite('Functional Tests', function() {
         assert.isArray(resJson, 'Response should be a Array')
         const resExpected = 1
 
-        assert.equal(resJson.length, resExpected, `Response length should be ${JSON.stringify(resExpected)}`)
-      
+        assert.isAtLeast(resJson.length, resExpected, `Response length should be ${JSON.stringify(resExpected)}`)
+
         let issue = resJson[0]
         assert.equal(issue.issue_title, issue_title, `Response.issue_title should be ${issue_title}`)  
         
@@ -235,8 +235,8 @@ suite('Functional Tests', function() {
         assert.isArray(resJson, 'Response should be a Array')
         const resExpected = 1
 
-        assert.equal(resJson.length, resExpected, `Response length should be ${JSON.stringify(resExpected)}`)
-      
+        assert.isAtLeast(resJson.length, resExpected, `Response length should be ${JSON.stringify(resExpected)}`)
+
         let issue = resJson[0]
         assert.equal(issue.issue_title, issue_title, `Response.issue_title should be ${issue_title}`)  
         assert.equal(issue.issue_text, issue_text, `Response.issue_text should be ${issue_text}`)  
