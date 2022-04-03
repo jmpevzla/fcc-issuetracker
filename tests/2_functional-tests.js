@@ -54,7 +54,7 @@ suite('Functional Tests', function() {
       .end(function (err, res) {
         assert.equal(res.status, 201, 'Response status should be 201')
 
-        const resJson = JSON.parse(res.text)
+        const resJson = res.body
         assert.hasAnyKeys(resJson, ['_id', 'created_on', 'updated_on'], 
           'Response should contains _id, created_on and updated_on')
         
@@ -94,7 +94,7 @@ suite('Functional Tests', function() {
       .end(function (err, res) {
         assert.equal(res.status, 201, 'Response status should be 201')
 
-        const resJson = JSON.parse(res.text)
+        const resJson = res.body
         assert.hasAnyKeys(resJson, ['_id', 'created_on', 'updated_on'], 
           'Response should contains _id, created_on and updated_on')
         
@@ -138,7 +138,7 @@ suite('Functional Tests', function() {
           .end(function (err, res) {
             assert.equal(res.status, 200, 'Response status should be 200')
   
-            const resJson = JSON.parse(res.text)
+            const resJson = res.body
             const resExpected = { error: 'required field(s) missing' } 
   
             assert.deepEqual(resJson, resExpected, `Response should be ${JSON.stringify(resExpected)}`)
@@ -171,7 +171,7 @@ suite('Functional Tests', function() {
       .end(function (err, res) {
         assert.equal(res.status, 200, 'Response status should be 200')
 
-        const resJson = JSON.parse(res.text)
+        const resJson = res.body
         assert.isArray(resJson, 'Response should be a Array')
         const resExpected = 1
 
@@ -205,7 +205,7 @@ suite('Functional Tests', function() {
       .end(function (err, res) {
         assert.equal(res.status, 200, 'Response status should be 200')
 
-        const resJson = JSON.parse(res.text)
+        const resJson = res.body
         assert.isArray(resJson, 'Response should be a Array')
         const resExpected = 1
 
@@ -231,7 +231,7 @@ suite('Functional Tests', function() {
       .end(function (err, res) {
         assert.equal(res.status, 200, 'Response status should be 200')
 
-        const resJson = JSON.parse(res.text)
+        const resJson = res.body
         assert.isArray(resJson, 'Response should be a Array')
         const resExpected = 1
 
