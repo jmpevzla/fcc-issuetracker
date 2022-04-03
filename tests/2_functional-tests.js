@@ -5,30 +5,37 @@ const server = require('../server');
 
 chai.use(chaiHttp);
 
+function createForTests() {
+  const createData = {
+    issue_title: "Fix error in creating data",
+    issue_text: "When we create data it has an error.",
+    created_by: "Jose", 
+    assigned_to: "Jose",
+    status_text: "In QA"
+  }
+
+  return new Promise(resolve => {
+    chai
+    .request(server)
+    .post('/api/issues/example')
+    .send(createData)
+    .end(function (err, res) {
+      resolve(res.body._id)
+    })
+  })
+}
+
+function viewForTests(id, callback) {
+  chai
+    .request(server)
+    .get(`/api/issues/example?_id=${id}`)
+    .end(function (err, res) {
+      callback(res.body[0])
+    })
+}
+
 suite('Functional Tests', function() {
   
-  // const sendData = {
-  //   issue_title: "Fix error in posting data",
-  //   issue_text: "When we post data it has an error.",
-  //   //created_on: new Date(2022, 3, 1, 21),
-  //   //updated_on: new Date(2022, 3, 1, 21),
-  //   created_by: "Jose", 
-  //   assigned_to: "Jose",
-  //   //open: true,
-  //   status_text: "In QA"
-  // }
-
-  // const respData = {
-  //   issue_title: "Fix error in posting data",
-  //   issue_text: "When we post data it has an error.",
-  //   // created_on: "2022-04-02T01:00:00.000Z",
-  //   // updated_on: "2022-04-02T01:00:00.000Z",
-  //   created_by: "Jose", 
-  //   assigned_to: "Jose",
-  //   open: true,
-  //   status_text: "In QA"  
-  // }
-
   test('Create an issue with every field: POST request to /api/issues/{project}', 
     function(done) {
 
@@ -237,6 +244,257 @@ suite('Functional Tests', function() {
         
         done()
       }) 
+  })
+
+  test('Update one field on an issue: PUT request to /api/issues/{project}',
+    function(done) {
+
+      async function doTest() {
+        const _id = await createForTests()
+        const issue_title = 'Fix error in updating data'
+        const updateData = {
+          _id,
+          issue_title
+        }
+
+        
+        chai
+          .request(server)
+          .put('/api/issues/example')
+          .send(updateData)
+          .end(function (err, res) {
+            assert.equal(res.status, 200, 'Response status should be 200')
+
+            const resExpected = {
+              result: 'successfully updated', 
+              _id 
+            }
+
+            assert.deepEqual(res.body, resExpected, `Response should be ${JSON.stringify(resExpected)}`)
+            
+            viewForTests(_id, (updated) => {
+              assert.equal(updated.issue_title, issue_title, `Response issue_title should be "${issue_title}"`)
+              done()
+            })
+          })
+      }
+
+      doTest()
+  })
+
+  test('Update multiple fields on an issue: PUT request to /api/issues/{project}',
+    function(done) {
+
+      async function doTest() {
+        const _id = await createForTests()
+        
+        const updateData = {
+          _id,
+          issue_title: "Fix error in updating data",
+          issue_text: "When we create update it has an error.",
+          created_by: "Jose Perez", 
+          assigned_to: "Jose Perez",
+          status_text: "In Prod",
+          open: false
+        }
+        
+        chai
+          .request(server)
+          .put('/api/issues/example')
+          .send(updateData)
+          .end(function (err, res) {
+            assert.equal(res.status, 200, 'Response status should be 200')
+
+            const resExpected = {
+              result: 'successfully updated', 
+              _id 
+            }
+
+            assert.deepEqual(res.body, resExpected, `Response should be ${JSON.stringify(resExpected)}`)
+            
+            viewForTests(_id, (updated) => {
+              delete updated.created_on
+              delete updated.updated_on
+
+              assert.deepEqual(updated, updateData, `Response should be "${JSON.stringify(updated)}"`)
+              done()
+            })
+          })
+      }
+
+      doTest()
+  })
+
+  test('Update an issue with missing _id: PUT request to /api/issues/{project}',
+    function(done) {
+
+      async function doTest() {
+        const updateData = {
+          issue_title: "Fix error in updating data"
+        }
+        
+        chai
+          .request(server)
+          .put('/api/issues/example')
+          .send(updateData)
+          .end(function (err, res) {
+            assert.equal(res.status, 200, 'Response status should be 200')
+
+            const resExpected = {
+              error: 'missing _id'
+            }
+
+            assert.deepEqual(res.body, resExpected, `Response should be ${JSON.stringify(resExpected)}`)
+            done()
+          })
+      }
+
+      doTest()
+  })
+
+  test('Update an issue with no fields to update: PUT request to /api/issues/{project}',
+    function(done) {
+
+      async function doTest() {
+        const updateData = {
+          _id: '1'
+        }
+        
+        chai
+          .request(server)
+          .put('/api/issues/example')
+          .send(updateData)
+          .end(function (err, res) {
+            assert.equal(res.status, 200, 'Response status should be 200')
+
+            const resExpected = {
+              error: 'no update field(s) sent', 
+              _id: '1' 
+            }
+
+            assert.deepEqual(res.body, resExpected, `Response should be ${JSON.stringify(resExpected)}`)
+            done()
+          })
+      }
+
+      doTest()
+  })
+
+  test('Update an issue with an invalid _id: PUT request to /api/issues/{project}',
+    function(done) {
+
+    async function doTest() {
+      const updateData = {
+        _id: '-1',
+        issue_title: 'Test issue'
+      }
+      
+      chai
+        .request(server)
+        .put('/api/issues/example')
+        .send(updateData)
+        .end(function (err, res) {
+          assert.equal(res.status, 200, 'Response status should be 200')
+
+          const resExpected = {
+            error: 'could not update', 
+            _id: '-1'
+          }
+
+          assert.deepEqual(res.body, resExpected, `Response should be ${JSON.stringify(resExpected)}`)
+          done()
+        })
+    }
+
+    doTest()
+  })
+
+  test('Delete an issue: DELETE request to /api/issues/{project}',
+    function(done) {
+
+    async function doTest() {
+      const _id = await createForTests()
+      
+      const deleteData = {
+        _id
+      }
+      
+      chai
+        .request(server)
+        .delete('/api/issues/example')
+        .send(deleteData)
+        .end(function (err, res) {
+          assert.equal(res.status, 200, 'Response status should be 200')
+
+          const resExpected = {
+            result: 'successfully deleted', 
+            _id
+          }
+
+          assert.deepEqual(res.body, resExpected, `Response should be ${JSON.stringify(resExpected)}`)
+          
+          viewForTests(_id, (deleted) => {
+            assert.isUndefined(deleted, 'response view should be undefined')
+            done()
+          })
+        })
+    }
+
+    doTest()
+  })
+
+  test('Delete an issue with an invalid _id: DELETE request to /api/issues/{project}',
+    function(done) {
+
+    async function doTest() {
+      const _id = '-1'
+      const deleteData = {
+        _id
+      }
+      
+      chai
+        .request(server)
+        .delete('/api/issues/example')
+        .send(deleteData)
+        .end(function (err, res) {
+          assert.equal(res.status, 200, 'Response status should be 200')
+
+          const resExpected = {
+            error: 'could not delete', 
+            _id
+          }
+
+          assert.deepEqual(res.body, resExpected, `Response should be ${JSON.stringify(resExpected)}`)
+          done()
+        })
+    }
+
+    doTest()
+  })
+
+  test('Delete an issue with missing _id: DELETE request to /api/issues/{project}',
+    function(done) {
+
+    async function doTest() {
+      const deleteData = {}
+      
+      chai
+        .request(server)
+        .delete('/api/issues/example')
+        .send(deleteData)
+        .end(function (err, res) {
+          assert.equal(res.status, 200, 'Response status should be 200')
+
+          const resExpected = {
+            error: 'missing _id'
+          }
+
+          assert.deepEqual(res.body, resExpected, `Response should be ${JSON.stringify(resExpected)}`)
+          done()
+        })
+    }
+
+    doTest()
   })
 
 });
